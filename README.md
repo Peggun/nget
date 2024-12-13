@@ -7,12 +7,13 @@ A modernized, multi-threaded download manager written in Rust. This is a moderni
 - Display a progress bar to indicate download status.
 - Automatically save the file to the specified directory.
 - Support for multi-threaded downloads.
+- Ability to resume downloads if download gets interrupted.
 
 ### Planned Features
-- Ability to pause and resume downloads.
 - Validation of file integrity (e.g., using checksums).
 - Logging for completed downloads.
 - Enhanced error handling and retries for failed downloads.
+- and plenty more!
 
 ## Installation
 ### Prerequisites
