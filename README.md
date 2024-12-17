@@ -8,6 +8,7 @@ A modernized, multi-threaded download manager written in Rust. This is a moderni
 - Automatically save the file to the specified directory.
 - Support for multi-threaded downloads.
 - Ability to resume downloads if download gets interrupted.
+- HTTP/2 support.
 
 ### Planned Features
 - Validation of file integrity (e.g., using checksums).
