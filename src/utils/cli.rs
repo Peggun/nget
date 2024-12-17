@@ -13,7 +13,7 @@
 // GNU General Public License for more details.
 
 use clap::Parser;
-
+use super::enums::HttpVersion;
 /// nget - A modernized wget implementation
 #[derive(Parser)]
 #[command(name = "nget")]
@@ -28,4 +28,24 @@ pub struct Args {
     /// File Path
     #[arg(short, long, default_value = "./")]
     pub output_dir: String,
+
+    /// Number of retries if download fails
+    #[arg(long, default_value = "3")]
+    pub retries: i32,
+
+    /// Delay between retries in seconds,
+    #[arg(long, default_value = "5")]
+    pub delay: u64,
+
+    /// Enable verbose output
+    #[arg(short = 'v', long, conflicts_with = "quiet")]
+    pub verbose: bool,
+
+    /// Suppress all output except errors
+    #[arg(short = 'q', long, conflicts_with = "verbose")]
+    pub quiet: bool,
+
+    /// HTTP version to use (unstable & unimplemented for HTTP/3)
+    #[arg(long, default_value_t = HttpVersion::Http11, value_enum)]
+    pub http_version: HttpVersion,
 }

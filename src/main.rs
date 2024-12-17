@@ -12,7 +12,6 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-
 use nget::cli;
 use nget::http;
 use nget::error::NgetError;
@@ -27,6 +26,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = cli::Args::parse();
     let urls = args.urls;
     let output_dir = args.output_dir;
+    let retries = args.retries;
+    let delay = args.delay;
+    let verbose = args.verbose;
+    let quiet = args.quiet;
 
     // Create MultiProgress instance
     let multi_progress = MultiProgress::new();
@@ -36,31 +39,48 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await
         .map_err(|e| NgetError::FileError(format!("Failed to create directory: {}", e)))?;
 
-    let download_tasks: Vec<_> = urls.iter().map(|url| {
+    // Download tasks
+    let download_tasks: Vec<_> = urls.into_iter().map(|url| {
         let output_dir = output_dir.clone();
         let url = url.clone();
-        let pb = multi_progress.add(ProgressBar::new(0));
-        pb.set_style(
-            ProgressStyle::default_bar()
-                .template("{msg} [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})")
-                .unwrap()
-                .progress_chars("=> "),
-        );
+        let http_version = args.http_version.clone();
+        let pb = if quiet {
+            ProgressBar::hidden()
+        } else {
+            let pb = multi_progress.add(ProgressBar::new_spinner());
+            pb.set_style(
+                ProgressStyle::default_spinner()
+                    .template("{msg} [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({bytes_per_sec}) eta: ({eta})")
+                    .unwrap()
+                    .progress_chars("=> "),
+            );
+            pb
+        };
+
         tokio::spawn(async move {
-            pb.set_message(format!("Downloading: {}", url));
-            match http::download_file(&url, &output_dir, &pb).await {
-                Ok(_) => {
-                    let file_name = url
-                        .split('/')
-                        .last()
-                        .unwrap_or("index.html");
-                    pb.finish_with_message(format!(
-                        "Download complete. Saved to {}/{}",
-                        output_dir, file_name
-                    ));
+            let mut attempt = 0;
+            loop {
+                attempt += 1;
+                if verbose {
+                    eprintln!("Attempt {} for URL: {}", attempt, url);
                 }
-                Err(e) => {
-                    pb.abandon_with_message(format!("Failed to download {}: {:?}", url, e));
+
+                match http::download_file(&url, &output_dir, &pb, &http_version).await {
+                    Ok(_) => {
+                        let file_name = url.split('/').last().unwrap_or("index.html");
+                        pb.finish_with_message(format!("Download complete: {}/{}", output_dir, file_name));
+                        break;
+                    }
+                    Err(e) if attempt < retries => {
+                        if verbose {
+                            eprintln!("Attempt {} failed for URL {}: {:?}. Retrying...", attempt, url, e);
+                        }
+                        tokio::time::sleep(std::time::Duration::from_secs(delay)).await;
+                    }
+                    Err(e) => {
+                        pb.abandon_with_message(format!("Failed to download {}: {:?}", url, e));
+                        break;
+                    }
                 }
             }
         })
@@ -72,7 +92,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Handle task results
     for (i, result) in results.into_iter().enumerate() {
         if let Err(err) = result {
-            eprintln!("Task {} failed: {:?}", i, err);
+            eprintln!("Task {} panicked: {:?}", i, err);
         }
     }
 

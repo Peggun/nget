@@ -12,8 +12,19 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-pub mod cli;
-pub mod file;
-pub mod http;
-pub mod error;
-pub mod enums;
+use clap::ValueEnum;
+
+#[derive(Debug, ValueEnum, Clone)]
+pub enum HttpVersion {
+    /// Use HTTP/3 (unstable & unimplemented)
+    #[clap(name = "http3")]
+    Http3,
+
+    /// Use HTTP/2
+    #[clap(name = "http2")]
+    Http2,
+
+    /// Use HTTP/1.1 (default)
+    #[clap(name = "http11")]
+    Http11,
+}

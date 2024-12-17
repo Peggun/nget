@@ -79,7 +79,8 @@ This project is licensed under the GNU License. See the [LICENSE](https://github
 [url](https://docs.rs/url/latest/url/) for url parsing.<br>
 [futures](https://docs.rs/futures/latest/futures/) for working with asynchronous computations.<br>
 [futures-util](https://docs.rs/futures-util/latest/futures_util/) utilities for futures.<br>
-[indicatif](https://docs.rs/indicatif/latest/indicatif/) for progress bars and spinner for the CLI.<br>
+[indicatif](https://docs.rs/indicatif/latest/indicatif/) for progress bars and spinners for the CLI.<br>
+[rustls](https://docs.rs/rustls/latest/rustls/) for TLS for other HTTP protocols. (requires [CMake](https://cmake.org/download/) to be installed)<br>
 And all dependencies of those crates.
 
 Happy Downloading! 🚀
