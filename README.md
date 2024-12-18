@@ -72,15 +72,6 @@ git push origin feature-name
 This project is licensed under the GNU License. See the [LICENSE](https://github.com/Peggun/nget/blob/main/LICENSE) file for more details.
 
 ## Acknowledgments
-[reqwest](https://docs.rs/reqwest/latest/reqwest/) for handling HTTP requests.<br>
-[clap](https://docs.rs/clap/latest/clap/) for command-line argument parsing.<br>
-[tokio](https://docs.rs/tokio/latest/tokio/) for asynchronous runtime and I/O operations.<br>
-[thiserror](https://docs.rs/thiserror/latest/thiserror/) for custom error types.<br>
-[url](https://docs.rs/url/latest/url/) for url parsing.<br>
-[futures](https://docs.rs/futures/latest/futures/) for working with asynchronous computations.<br>
-[futures-util](https://docs.rs/futures-util/latest/futures_util/) utilities for futures.<br>
-[indicatif](https://docs.rs/indicatif/latest/indicatif/) for progress bars and spinners for the CLI.<br>
-[rustls](https://docs.rs/rustls/latest/rustls/) for TLS for other HTTP protocols. (requires [CMake](https://cmake.org/download/) to be installed)<br>
-And all dependencies of those crates.
+I would like to acknowledge and thank for use of all of the crates used in this project and all of the dependencies of the crates used.
 
 Happy Downloading! 🚀
