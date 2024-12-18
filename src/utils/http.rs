@@ -15,8 +15,6 @@
 use super::enums::HttpVersion;
 use crate::error::NgetError;
 use futures_util::StreamExt;
-use hickory_resolver::config::{ResolverConfig, ResolverOpts};
-use hickory_resolver::TokioAsyncResolver;
 use indicatif::ProgressBar;
 use reqwest::Version;
 use reqwest::{header, Client};
@@ -56,20 +54,27 @@ pub async fn http11_download(
         NgetError::InvalidUrl(format!("Failed to parse URL: {}", e))
     })?;
 
-    // Make sure the URL actually exists. Using DNS lookup.
-    #[cfg(target_os = "windows")]
-    let resolver = TokioAsyncResolver::tokio(ResolverConfig::default(), ResolverOpts::default());
+    // Make sure the URL actually exists using DNS lookup
+    let resolver = {
+        #[cfg(any(unix, windows))]
+        {
+            use hickory_resolver::{name_server::TokioConnectionProvider, TokioAsyncResolver};
+            TokioAsyncResolver::from_system_conf(TokioConnectionProvider::default())
+                .expect("failed to create resolver")
+        }
 
-    #[cfg(target_os = "linux")]
-    let resolver = TokioAsyncResolver::tokio_from_system_conf();
+        #[cfg(not(any(unix, windows)))]
+        {
+            use hickory_resolver::{
+                config::{ResolverConfig, ResolverOpts},
+                Resolver,
+            };
+            println!("Initializing Google resolver...");
+            Resolver::tokio(ResolverConfig::google(), ResolverOpts::default())
+        }
+    };
 
-    let _dns_response = resolver
-        .lookup_ip(parsed_url.host_str().unwrap_or_default())
-        .await
-        .map_err(|e| {
-            log::error!("Failed to resolve DNS for '{}': {}", url, e);
-            NgetError::DnsResolutionError(format!("Failed to resolve DNS: {}", e))
-        })?;
+    let _dns_response = resolver.lookup_ip(parsed_url.host_str().unwrap_or_default()).await?;
 
     // Extract file name from URL
     let file_name = if parsed_url.path() == "/" {
@@ -170,19 +175,26 @@ pub async fn http2_download(
     //log::info!("Parsed URL: {}", parsed_url);
 
     // Make sure the URL actually exists using DNS lookup
-    #[cfg(target_os = "windows")]
-    let resolver = TokioAsyncResolver::tokio(ResolverConfig::default(), ResolverOpts::default());
+    let resolver = {
+        #[cfg(any(unix, windows))]
+        {
+            use hickory_resolver::{name_server::TokioConnectionProvider, TokioAsyncResolver};
+            TokioAsyncResolver::from_system_conf(TokioConnectionProvider::default())
+                .expect("failed to create resolver")
+        }
 
-    #[cfg(target_os = "linux")]
-    let resolver = TokioAsyncResolver::tokio_from_system_conf();
+        #[cfg(not(any(unix, windows)))]
+        {
+            use hickory_resolver::{
+                config::{ResolverConfig, ResolverOpts},
+                Resolver,
+            };
+            println!("Initializing Google resolver...");
+            Resolver::tokio(ResolverConfig::google(), ResolverOpts::default())
+        }
+    };
 
-    let _dns_response = resolver
-        .lookup_ip(parsed_url.host_str().unwrap_or_default())
-        .await
-        .map_err(|e| {
-            log::error!("Failed to resolve DNS for '{}': {}", url, e);
-            NgetError::DnsResolutionError(format!("Failed to resolve DNS: {}", e))
-        })?;
+    let _dns_response = resolver.lookup_ip(parsed_url.host_str().unwrap_or_default()).await?;
 
     // Extract file name from URL
     let file_name = if parsed_url.path() == "/" {

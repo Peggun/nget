@@ -15,6 +15,7 @@
 use std::convert::Infallible;
 use std::error::Error as StdError;
 use std::io;
+use hickory_resolver::error::ResolveError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -43,7 +44,7 @@ pub enum NgetError {
     ReqwestError(reqwest::Error),
 
     #[error("Unable to resolve address: {0}")]
-    ResolveAddressError(String),
+    ResolveAddressError(ResolveError),
 
     #[error("H2 Error: {0}")]
     H2Error(h2::Error),
@@ -180,9 +181,14 @@ impl From<tokio_rustls::rustls::pki_types::InvalidDnsNameError> for NgetError {
     }
 }
 
-// Implement From<std::fmt::Error> for NgetError
 impl From<std::fmt::Error> for NgetError {
     fn from(err: std::fmt::Error) -> NgetError {
         NgetError::ToStringError(err)
+    }
+}
+
+impl From<ResolveError> for NgetError {
+    fn from(err: ResolveError) -> Self {
+        NgetError::ResolveAddressError(err)
     }
 }
