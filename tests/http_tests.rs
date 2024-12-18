@@ -1,9 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use super::*;
     use indicatif::ProgressBar;
     use nget::enums::HttpVersion;
-    use nget::http::{download_file, http11_download, http2_download};
+    use nget::http::download_file;
     use std::path::Path;
     use tokio::fs;
     use wiremock::matchers::{method, path};

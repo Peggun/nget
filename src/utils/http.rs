@@ -106,9 +106,9 @@ pub async fn http11_download(
     if !response.status().is_success() && response.status() != reqwest::StatusCode::PARTIAL_CONTENT
     {
         if response.status() == reqwest::StatusCode::NOT_FOUND {
-            return Err(NgetError::InvalidUrl(format!(
-                "URL is Invalid. Please make sure the URL is correct."
-            )));
+            return Err(NgetError::InvalidUrl(
+                "URL is Invalid. Please make sure the URL is correct.".to_string()
+            ));
         }
         return Err(NgetError::HttpRequest(format!(
             "Unexpected status: {}",
@@ -167,7 +167,7 @@ pub async fn http2_download(
     let parsed_url = Url::parse(url)
         .map_err(|e| NgetError::InvalidUrl(format!("Failed to parse URL: {}", e)))?;
 
-    log::info!("Parsed URL: {}", parsed_url);
+    //log::info!("Parsed URL: {}", parsed_url);
 
     // Make sure the URL actually exists using DNS lookup
     #[cfg(target_os = "windows")]
@@ -201,11 +201,11 @@ pub async fn http2_download(
     // Check if the file already exists and get its size
     let existing_size = metadata(&file_path).map(|meta| meta.len()).unwrap_or(0);
 
-    log::info!(
-        "File path: {:?}, Existing size: {}",
-        file_path,
-        existing_size
-    );
+    //log::info!(
+        //"File path: {:?}, Existing size: {}",
+        //file_path,
+        //existing_size
+    //);
 
     // Prepare HTTP request with HTTP/2
     let request = CLIENT.get(url).version(Version::HTTP_2);
@@ -216,17 +216,17 @@ pub async fn http2_download(
         Err(e) => {
             if let Some(inner) = e.source() {
                 if inner.to_string().contains("UserUnsupportedVersion") {
-                    log::error!("HTTP/2 unsupported for URL: {}", url);
-                    return Err(NgetError::UnsupportedHTTPVersion(format!(
-                        "This URL doesn't support HTTP/2. Please try using HTTP/1.1 instead."
-                    )));
+                    //log::error!("HTTP/2 unsupported for URL: {}", url);
+                    return Err(NgetError::InvalidUrl(
+                        "URL is Invalid. Please make sure the URL is correct.".to_string()
+                    ));
                 }
             }
             return Err(NgetError::HttpRequest(format!("Request failed: {}", e)));
         }
     };
 
-    log::info!("Response status: {}", response.status());
+    //log::info!("Response status: {}", response.status());
 
     // Handle the response status
     if !response.status().is_success() && response.status() != reqwest::StatusCode::PARTIAL_CONTENT

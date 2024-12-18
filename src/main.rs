@@ -19,7 +19,6 @@ use nget::http;
 use clap::Parser;
 use futures::future;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
-use tokio;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
