@@ -15,7 +15,7 @@
 pub mod utils;
 
 pub use utils::cli;
+pub use utils::enums;
+pub use utils::error;
 pub use utils::file;
 pub use utils::http;
-pub use utils::error;
-pub use utils::enums;

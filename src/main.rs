@@ -13,13 +13,13 @@
 // GNU General Public License for more details.
 
 use nget::cli;
-use nget::http;
 use nget::error::NgetError;
+use nget::http;
 
 use clap::Parser;
 use futures::future;
-use tokio;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use tokio;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -30,6 +30,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let delay = args.delay;
     let verbose = args.verbose;
     let quiet = args.quiet;
+
+    tracing_subscriber::fmt::init();
 
     // Create MultiProgress instance
     let multi_progress = MultiProgress::new();

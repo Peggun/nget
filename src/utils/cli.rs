@@ -12,8 +12,8 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-use clap::Parser;
 use super::enums::HttpVersion;
+use clap::Parser;
 /// nget - A modernized wget implementation
 #[derive(Parser)]
 #[command(name = "nget")]

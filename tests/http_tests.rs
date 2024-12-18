@@ -1,41 +1,149 @@
-// This file is part of nget
-//
-// Copyright (C) 2024 Peggun
-//
-// nget is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// nget is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
-// Run using cargo test
 #[cfg(test)]
 mod tests {
-    use nget::error::NgetError;
-    use nget::http;
+    use super::*;
+    use indicatif::ProgressBar;
+    use nget::enums::HttpVersion;
+    use nget::http::{download_file, http11_download, http2_download};
+    use std::path::Path;
+    use tokio::fs;
+    use wiremock::matchers::{method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[tokio::test]
-    async fn test_download_file_invalid_url() {
-        let url = "http://nonexistent.url/file.txt";
-        let file_path = "./test_file.txt";
+    async fn test_http11_download_success() {
+        let mock_server = MockServer::start().await;
 
-        let result = http::download_file(url, file_path).await; // There are errors due to the addition of the progress bars 
+        // Mock a successful HTTP/1.1 response
+        let mock_response = ResponseTemplate::new(200).set_body_string("Test file content");
+        Mock::given(method("GET"))
+            .and(path("/testfile"))
+            .respond_with(mock_response)
+            .mount(&mock_server)
+            .await;
 
-        // Assert that the result is an error
+        let url = format!("{}/testfile", &mock_server.uri());
+        let save_dir = "./test_output";
+        let progress_bar = ProgressBar::hidden(); // Hidden to prevent output during testing
+
+        // Ensure the directory exists
+        fs::create_dir_all(save_dir).await.unwrap();
+
+        let result = download_file(&url, save_dir, &progress_bar, &HttpVersion::Http11).await;
+
+        assert!(result.is_ok());
+        let saved_file_path = Path::new(save_dir).join("testfile");
+        assert!(saved_file_path.exists());
+
+        // Verify the content
+        let content = fs::read_to_string(&saved_file_path).await.unwrap();
+        assert_eq!(content, "Test file content");
+
+        // Clean up
+        fs::remove_file(saved_file_path).await.unwrap();
+        fs::remove_dir_all(save_dir).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_http11_download_invalid_url() {
+        let invalid_url = "http://nonexistent.url.invalid";
+        let save_dir = "./test_output";
+        let progress_bar = ProgressBar::hidden();
+
+        let result =
+            download_file(invalid_url, save_dir, &progress_bar, &HttpVersion::Http11).await;
+
+        // Invalid URL should produce an error
         assert!(result.is_err());
+    }
 
-        // Match the specific error type and message
-        if let Err(err) = result {
-            match err {
-                NgetError::HttpRequest(message) => {
-                    assert!(message.contains("Failed to send request"), "Unexpected message: {}", message);
-                }
-                _ => panic!("Unexpected error type: {:?}", err),
-            }
-        }
+    #[tokio::test]
+    async fn test_http2_download_success() {
+        let mock_server = MockServer::start().await;
+
+        // Mock a successful HTTP/2 response
+        let mock_response = ResponseTemplate::new(200).set_body_string("HTTP/2 file content");
+        Mock::given(method("GET"))
+            .and(path("/http2file"))
+            .respond_with(mock_response)
+            .mount(&mock_server)
+            .await;
+
+        let url = format!("{}/http2file", &mock_server.uri());
+        let save_dir = "./test_output";
+        let progress_bar = ProgressBar::hidden();
+
+        // Ensure the directory exists
+        fs::create_dir_all(save_dir).await.unwrap();
+
+        let result = download_file(&url, save_dir, &progress_bar, &HttpVersion::Http2).await;
+
+        assert!(result.is_ok());
+        let saved_file_path = Path::new(save_dir).join("http2file");
+        assert!(saved_file_path.exists());
+
+        // Verify the content
+        let content = fs::read_to_string(&saved_file_path).await.unwrap();
+        assert_eq!(content, "HTTP/2 file content");
+
+        // Clean up
+        fs::remove_file(saved_file_path).await.unwrap();
+        fs::remove_dir_all(save_dir).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_http2_download_unsupported_version() {
+        let mock_server = MockServer::start().await;
+
+        // Mock an unsupported HTTP version response
+        let mock_response = ResponseTemplate::new(505); // 505 HTTP Version Not Supported
+        Mock::given(method("GET"))
+            .and(path("/unsupported"))
+            .respond_with(mock_response)
+            .mount(&mock_server)
+            .await;
+
+        let url = format!("{}/unsupported", &mock_server.uri());
+        let save_dir = "./test_output";
+        let progress_bar = ProgressBar::hidden();
+
+        let result = download_file(&url, save_dir, &progress_bar, &HttpVersion::Http2).await;
+
+        // 505 response should result in an error
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_http11_partial_content() {
+        let mock_server = MockServer::start().await;
+
+        // Mock a partial content response
+        let partial_response = ResponseTemplate::new(206)
+            .set_body_string("Partial")
+            .insert_header("Content-Range", "bytes 0-6/7"); // Partial content header
+        Mock::given(method("GET"))
+            .and(path("/partial"))
+            .respond_with(partial_response)
+            .mount(&mock_server)
+            .await;
+
+        let url = format!("{}/partial", &mock_server.uri());
+        let save_dir = "./test_output";
+        let progress_bar = ProgressBar::hidden();
+
+        fs::create_dir_all(save_dir).await.unwrap();
+
+        let result = download_file(&url, save_dir, &progress_bar, &HttpVersion::Http11).await;
+
+        assert!(result.is_ok());
+
+        let saved_file_path = Path::new(save_dir).join("partial");
+        assert!(saved_file_path.exists());
+
+        // Validate content
+        let content = fs::read_to_string(&saved_file_path).await.unwrap();
+        assert_eq!(content, "Partial");
+
+        fs::remove_file(saved_file_path).await.unwrap();
+        fs::remove_dir_all(save_dir).await.unwrap();
     }
 }

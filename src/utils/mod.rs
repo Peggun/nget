@@ -13,7 +13,7 @@
 // GNU General Public License for more details.
 
 pub mod cli;
+pub mod enums;
+pub mod error;
 pub mod file;
 pub mod http;
-pub mod error;
-pub mod enums;

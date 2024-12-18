@@ -12,7 +12,6 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
@@ -21,7 +20,6 @@ use std::path::Path;
 use crate::error::NgetError;
 
 pub async fn save_to_file(content: &[u8], file_path: &str) -> Result<(), NgetError> {
-
     // Ensure the directory exists, not the file path itself
     let dir_path = Path::new(file_path).parent().unwrap();
     tokio::fs::create_dir_all(&dir_path)

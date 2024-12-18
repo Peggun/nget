@@ -12,10 +12,10 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-use thiserror::Error;
-use std::io;
 use std::convert::Infallible;
 use std::error::Error as StdError;
+use std::io;
+use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum NgetError {
@@ -59,6 +59,9 @@ pub enum NgetError {
 
     #[error("To String Error: {0}")]
     ToStringError(std::fmt::Error),
+
+    #[error("Unsupported HTTP Version: {0}")]
+    UnsupportedHTTPVersion(String),
 
     // Errors related to HTTP requests
     #[error("HTTP request failed: {0}")]
