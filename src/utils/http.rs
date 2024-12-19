@@ -24,7 +24,7 @@ use futures_util::StreamExt;
 use indicatif::ProgressBar;
 
 use reqwest::Version;
-use reqwest::{header, Client};
+use reqwest::header;
 
 use std::error::Error;
 use std::fs::metadata;
@@ -160,7 +160,7 @@ pub async fn http2_download(
     let _ = env_logger::try_init();
 
     // Create a client
-    let client = match get_client(&config, &HttpVersion::Http11) {
+    let client = match get_client(&config, &HttpVersion::Http2) {
         Ok(client) => {
             client
         }

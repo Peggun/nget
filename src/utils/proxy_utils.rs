@@ -17,3 +17,24 @@ pub struct ProxyConfig {
     pub proxy_user: String,
     pub proxy_password: String,
 }
+
+impl ProxyConfig {
+    /// Creates a new empty instance of ProxyConfig. Good for test use
+    pub fn empty() -> Self {
+        ProxyConfig {
+            proxy_url: String::new(),
+            proxy_user: String::new(),
+            proxy_password: String::new()
+        }
+    }
+}
+
+impl Default for ProxyConfig {
+    fn default() -> Self {
+        ProxyConfig {
+            proxy_url: String::new(),
+            proxy_user: String::new(),
+            proxy_password: String::new(),
+        }
+    }
+}

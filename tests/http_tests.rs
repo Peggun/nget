@@ -33,11 +33,7 @@ mod tests {
         // Ensure the directory exists
         fs::create_dir_all(save_dir).await.unwrap();
 
-        let config = ProxyConfig {
-            proxy_url: String::new(),
-            proxy_user: String::new(),
-            proxy_password: String::new(),
-        };
+        let config = ProxyConfig::empty();
 
         let result = download_file(
             &url,
@@ -69,11 +65,7 @@ mod tests {
         let output_file_name = None;
         let progress_bar = ProgressBar::hidden();
 
-        let config = ProxyConfig {
-            proxy_url: String::new(),
-            proxy_user: String::new(),
-            proxy_password: String::new(),
-        };
+        let config = ProxyConfig::empty();
 
         let result = download_file(
             invalid_url,
@@ -106,11 +98,7 @@ mod tests {
         let output_file_name = None;
         let progress_bar = ProgressBar::hidden();
 
-        let config = ProxyConfig {
-            proxy_url: String::new(),
-            proxy_user: String::new(),
-            proxy_password: String::new(),
-        };
+        let config = ProxyConfig::empty();
 
         // Ensure the directory exists
         fs::create_dir_all(save_dir).await.unwrap();
@@ -155,11 +143,7 @@ mod tests {
         let output_file_name = None;
         let progress_bar = ProgressBar::hidden();
 
-        let config = ProxyConfig {
-            proxy_url: String::new(),
-            proxy_user: String::new(),
-            proxy_password: String::new(),
-        };
+        let config = ProxyConfig::empty();
 
         let result = download_file(
             &url,
@@ -194,11 +178,7 @@ mod tests {
         let output_file_name = None;
         let progress_bar = ProgressBar::hidden();
 
-        let config = ProxyConfig {
-            proxy_url: String::new(),
-            proxy_user: String::new(),
-            proxy_password: String::new(),
-        };
+        let config = ProxyConfig::empty();
 
         fs::create_dir_all(save_dir).await.unwrap();
 

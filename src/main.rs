@@ -15,7 +15,6 @@
 use nget::{cli, proxy_utils::ProxyConfig};
 use nget::error::NgetError;
 use nget::http;
-use nget::utils::proxy_utils;
 
 use clap::Parser;
 use futures::future;
