@@ -12,8 +12,10 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-use super::enums::HttpVersion;
+use crate::enums::HttpVersion;
+
 use clap::Parser;
+
 /// nget - A modernized wget implementation
 #[derive(Parser)]
 #[command(name = "nget")]
@@ -25,9 +27,13 @@ pub struct Args {
     #[arg(short, long, value_delimiter = ' ', num_args = 1..)]
     pub urls: Vec<String>,
 
-    /// File Path
-    #[arg(short, long, default_value = "./")]
+    /// File Path - Output Directory
+    #[arg(short = 'P', long, default_value = "./")]
     pub output_dir: String,
+
+    /// File Path - File Name
+    #[arg(short = 'O', long, default_value = None)]
+    pub output_file_name: Option<String>,
 
     /// Number of retries if download fails
     #[arg(long, default_value = "3")]
@@ -48,4 +54,16 @@ pub struct Args {
     /// HTTP version to use (unstable & unimplemented for HTTP/3)
     #[arg(long, default_value_t = HttpVersion::Http11, value_enum)]
     pub http_version: HttpVersion,
+
+    /// Use a proxy server
+    #[arg(long, default_value = "")]
+    pub proxy_url: String,
+
+    /// Proxy server username
+    #[arg(long, default_value = "")]
+    pub proxy_user: String,
+
+    /// Proxy server password
+    #[arg(long, default_value = "")]
+    pub proxy_pass: String,
 }

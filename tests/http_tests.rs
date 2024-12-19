@@ -1,10 +1,15 @@
 #[cfg(test)]
 mod tests {
     use indicatif::ProgressBar;
+
     use nget::enums::HttpVersion;
     use nget::http::download_file;
+    use nget::proxy_utils::ProxyConfig;
+
     use std::path::Path;
+
     use tokio::fs;
+
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -22,12 +27,27 @@ mod tests {
 
         let url = format!("{}/testfile", &mock_server.uri());
         let save_dir = "./test_output";
+        let output_file_name = None;
         let progress_bar = ProgressBar::hidden(); // Hidden to prevent output during testing
 
         // Ensure the directory exists
         fs::create_dir_all(save_dir).await.unwrap();
 
-        let result = download_file(&url, save_dir, &progress_bar, &HttpVersion::Http11).await;
+        let config = ProxyConfig {
+            proxy_url: String::new(),
+            proxy_user: String::new(),
+            proxy_password: String::new(),
+        };
+
+        let result = download_file(
+            &url,
+            save_dir,
+            &output_file_name,
+            &progress_bar,
+            &HttpVersion::Http11,
+            &config
+        )
+        .await;
 
         assert!(result.is_ok());
         let saved_file_path = Path::new(save_dir).join("testfile");
@@ -46,10 +66,24 @@ mod tests {
     async fn test_http11_download_invalid_url() {
         let invalid_url = "http://nonexistent.url.invalid";
         let save_dir = "./test_output";
+        let output_file_name = None;
         let progress_bar = ProgressBar::hidden();
 
-        let result =
-            download_file(invalid_url, save_dir, &progress_bar, &HttpVersion::Http11).await;
+        let config = ProxyConfig {
+            proxy_url: String::new(),
+            proxy_user: String::new(),
+            proxy_password: String::new(),
+        };
+
+        let result = download_file(
+            invalid_url,
+            save_dir,
+            &output_file_name,
+            &progress_bar,
+            &HttpVersion::Http11,
+            &config
+        )
+        .await;
 
         // Invalid URL should produce an error
         assert!(result.is_err());
@@ -69,12 +103,27 @@ mod tests {
 
         let url = format!("{}/http2file", &mock_server.uri());
         let save_dir = "./test_output";
+        let output_file_name = None;
         let progress_bar = ProgressBar::hidden();
+
+        let config = ProxyConfig {
+            proxy_url: String::new(),
+            proxy_user: String::new(),
+            proxy_password: String::new(),
+        };
 
         // Ensure the directory exists
         fs::create_dir_all(save_dir).await.unwrap();
 
-        let result = download_file(&url, save_dir, &progress_bar, &HttpVersion::Http2).await;
+        let result = download_file(
+            &url,
+            save_dir,
+            &output_file_name,
+            &progress_bar,
+            &HttpVersion::Http2,
+            &config
+        )
+        .await;
 
         assert!(result.is_ok());
         let saved_file_path = Path::new(save_dir).join("http2file");
@@ -103,9 +152,24 @@ mod tests {
 
         let url = format!("{}/unsupported", &mock_server.uri());
         let save_dir = "./test_output";
+        let output_file_name = None;
         let progress_bar = ProgressBar::hidden();
 
-        let result = download_file(&url, save_dir, &progress_bar, &HttpVersion::Http2).await;
+        let config = ProxyConfig {
+            proxy_url: String::new(),
+            proxy_user: String::new(),
+            proxy_password: String::new(),
+        };
+
+        let result = download_file(
+            &url,
+            save_dir,
+            &output_file_name,
+            &progress_bar,
+            &HttpVersion::Http2,
+            &config
+        )
+        .await;
 
         // 505 response should result in an error
         assert!(result.is_err());
@@ -127,11 +191,26 @@ mod tests {
 
         let url = format!("{}/partial", &mock_server.uri());
         let save_dir = "./test_output";
+        let output_file_name = None;
         let progress_bar = ProgressBar::hidden();
+
+        let config = ProxyConfig {
+            proxy_url: String::new(),
+            proxy_user: String::new(),
+            proxy_password: String::new(),
+        };
 
         fs::create_dir_all(save_dir).await.unwrap();
 
-        let result = download_file(&url, save_dir, &progress_bar, &HttpVersion::Http11).await;
+        let result = download_file(
+            &url,
+            save_dir,
+            &output_file_name,
+            &progress_bar,
+            &HttpVersion::Http11,
+            &config,
+        )
+        .await;
 
         assert!(result.is_ok());
 

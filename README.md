@@ -32,22 +32,21 @@ A modernized, multi-threaded download manager written in Rust. This is a moderni
    ```
 3. Run the tool:
    ```bash
-   cargo run -- -u [URL] -o [SAVE_DIR]
+   cargo run -- -u [URL/S] -P [SAVE_DIR] -O [SAVE_FILE_NAME]
    ```
 
 ## Usage
 To download a file, run the following command:
 ```bash
-cargo run -- -u https://example.com/file.zip -o ./downloads/
+cargo run -- -u https://example.com/file.zip -P ./downloads/
 ```
 - Replace `https://example.com/file.zip` with the URL of the file you want to download.
 - Replace `./downloads/` with the directory where you want to save the file.
 
 ## Example Output
 ```bash
-Download complete. Saved to text/google.com [========================================] 0 B/0 B (0s)
+Saved to: test\test_again\index.html [========================================] 110.64 KiB/110.64 KiB (86.93 KiB/s) eta: (0s)
 ```
-This UI needs some fixing but it is ok for now.
 
 ## Contributing
 Contributions are welcome! If you have suggestions for new features or find bugs, feel free to open an issue or create a pull request.

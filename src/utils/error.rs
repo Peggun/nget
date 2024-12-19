@@ -12,10 +12,12 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
+use hickory_resolver::error::ResolveError;
+
 use std::convert::Infallible;
 use std::error::Error as StdError;
 use std::io;
-use hickory_resolver::error::ResolveError;
+
 use thiserror::Error;
 
 #[derive(Error, Debug)]

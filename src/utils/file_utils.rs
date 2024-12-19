@@ -12,6 +12,8 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
+// This file isnt currently in use yet. Will implement later.
+
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 

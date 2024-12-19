@@ -12,79 +12,75 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-use super::enums::HttpVersion;
+use crate::enums::HttpVersion;
 use crate::error::NgetError;
+use crate::utils::client_utils::get_client;
+use crate::utils::resolver_utils::build_resolver;
+use crate::utils::url_utils::{self, get_file_name};
+use crate::utils::proxy_utils::ProxyConfig;
+
 use futures_util::StreamExt;
+
 use indicatif::ProgressBar;
+
 use reqwest::Version;
 use reqwest::{header, Client};
+
 use std::error::Error;
 use std::fs::metadata;
 use std::path::Path;
+
 use tokio::fs::OpenOptions;
 use tokio::io::AsyncWriteExt;
-use url::Url;
 
 pub async fn download_file(
     url: &str,
     save_dir: &str,
+    output_file_name: &Option<&str>,
     progress_bar: &ProgressBar,
     http_version: &HttpVersion,
+    config: &ProxyConfig,
 ) -> Result<(), NgetError> {
     match http_version {
-        HttpVersion::Http11 => http11_download(url, save_dir, progress_bar).await,
-        HttpVersion::Http2 => http2_download(url, save_dir, progress_bar).await,
-        HttpVersion::Http3 => http11_download(url, save_dir, progress_bar).await,
+        HttpVersion::Http11 => http11_download(url, save_dir, *output_file_name, progress_bar, config).await,
+        HttpVersion::Http2 => http2_download(url, save_dir, *output_file_name, progress_bar, config).await,
+        HttpVersion::Http3 => http11_download(url, save_dir, *output_file_name, progress_bar, config).await,
     }
 }
 
 pub async fn http11_download(
     url: &str,
     save_dir: &str,
+    output_file_name: Option<&str>,
     progress_bar: &ProgressBar,
+    config: &ProxyConfig
 ) -> Result<(), NgetError> {
     let _ = env_logger::try_init();
 
-    // Reuse HTTP client for multiple requests
-    static CLIENT: once_cell::sync::Lazy<Client> =
-        once_cell::sync::Lazy::new(|| Client::builder().build().unwrap());
-
-    let parsed_url = Url::parse(url).map_err(|e| {
-        log::error!("Failed to parse URL '{}': {}", url, e);
-        NgetError::InvalidUrl(format!("Failed to parse URL: {}", e))
-    })?;
-
-    // Make sure the URL actually exists using DNS lookup
-    let resolver = {
-        #[cfg(any(unix, windows))]
-        {
-            use hickory_resolver::{name_server::TokioConnectionProvider, TokioAsyncResolver};
-            TokioAsyncResolver::from_system_conf(TokioConnectionProvider::default())
-                .expect("failed to create resolver")
+    // Create a client
+    let client = match get_client(&config, &HttpVersion::Http11) {
+        Ok(client) => {
+            client
         }
-
-        #[cfg(not(any(unix, windows)))]
-        {
-            use hickory_resolver::{
-                config::{ResolverConfig, ResolverOpts},
-                Resolver,
-            };
-            println!("Initializing Google resolver...");
-            Resolver::tokio(ResolverConfig::google(), ResolverOpts::default())
+        Err(e) => {
+            // Handle the error (e.g., print it, log it, etc.)
+            return Err(e);
         }
     };
 
-    let _dns_response = resolver.lookup_ip(parsed_url.host_str().unwrap_or_default()).await?;
+    let parsed_url = url_utils::parse_url(url);
 
-    // Extract file name from URL
-    let file_name = if parsed_url.path() == "/" {
-        "index.html".to_string()
-    } else {
-        parsed_url
-            .path_segments()
-            .and_then(|segments| segments.last())
-            .unwrap_or("index")
-            .to_string()
+    // Make sure the URL actually exists using DNS lookup
+    let resolver = build_resolver();
+
+    let _dns_response = resolver
+        .lookup_ip(parsed_url.host_str().unwrap_or_default())
+        .await?;
+
+    // Extract file name from URL or use user arg file name.
+    let file_name = match output_file_name {
+        Some(name) => name.to_string(),
+        None => get_file_name(parsed_url),
     };
 
     progress_bar.set_message(file_name.clone());
@@ -93,7 +89,7 @@ pub async fn http11_download(
     // Check if the file already exists and get its size
     let existing_size = metadata(&file_path).map(|meta| meta.len()).unwrap_or(0);
 
-    let mut request = CLIENT.get(url);
+    let mut request = client.get(url);
 
     // If the file exists, set the range to download only the remaining part
     if existing_size > 0 {
@@ -112,7 +108,7 @@ pub async fn http11_download(
     {
         if response.status() == reqwest::StatusCode::NOT_FOUND {
             return Err(NgetError::InvalidUrl(
-                "URL is Invalid. Please make sure the URL is correct.".to_string()
+                "URL is Invalid. Please make sure the URL is correct.".to_string(),
             ));
         }
         return Err(NgetError::HttpRequest(format!(
@@ -157,54 +153,38 @@ pub async fn http11_download(
 pub async fn http2_download(
     url: &str,
     save_dir: &str,
+    output_file_name: Option<&str>,
     progress_bar: &ProgressBar,
+    config: &ProxyConfig
 ) -> Result<(), NgetError> {
     let _ = env_logger::try_init();
 
-    // Reuse HTTP client for multiple requests
-    static CLIENT: once_cell::sync::Lazy<Client> = once_cell::sync::Lazy::new(|| {
-        Client::builder()
-            .http2_prior_knowledge() // Enforce HTTP/2
-            .build()
-            .unwrap()
-    });
+    // Create a client
+    let client = match get_client(&config, &HttpVersion::Http11) {
+        Ok(client) => {
+            client
+        }
+        Err(e) => {
+            // Handle the error (e.g., print it, log it, etc.)
+            return Err(e);
+        }
+    };
 
-    let parsed_url = Url::parse(url)
-        .map_err(|e| NgetError::InvalidUrl(format!("Failed to parse URL: {}", e)))?;
+    let parsed_url = url_utils::parse_url(url);
 
     //log::info!("Parsed URL: {}", parsed_url);
 
     // Make sure the URL actually exists using DNS lookup
-    let resolver = {
-        #[cfg(any(unix, windows))]
-        {
-            use hickory_resolver::{name_server::TokioConnectionProvider, TokioAsyncResolver};
-            TokioAsyncResolver::from_system_conf(TokioConnectionProvider::default())
-                .expect("failed to create resolver")
-        }
+    let resolver = build_resolver();
 
-        #[cfg(not(any(unix, windows)))]
-        {
-            use hickory_resolver::{
-                config::{ResolverConfig, ResolverOpts},
-                Resolver,
-            };
-            println!("Initializing Google resolver...");
-            Resolver::tokio(ResolverConfig::google(), ResolverOpts::default())
-        }
-    };
+    let _dns_response = resolver
+        .lookup_ip(parsed_url.host_str().unwrap_or_default())
+        .await?;
 
-    let _dns_response = resolver.lookup_ip(parsed_url.host_str().unwrap_or_default()).await?;
-
-    // Extract file name from URL
-    let file_name = if parsed_url.path() == "/" {
-        "index.html".to_string()
-    } else {
-        parsed_url
-            .path_segments()
-            .and_then(|segments| segments.last())
-            .unwrap_or("index")
-            .to_string()
+    // Extract file name from URL or use user arg file name.
+    let file_name = match output_file_name {
+        Some(name) => name.to_string(),
+        None => get_file_name(parsed_url),
     };
 
     progress_bar.set_message(file_name.clone());
@@ -214,13 +194,13 @@ pub async fn http2_download(
     let existing_size = metadata(&file_path).map(|meta| meta.len()).unwrap_or(0);
 
     //log::info!(
-        //"File path: {:?}, Existing size: {}",
-        //file_path,
-        //existing_size
+    //"File path: {:?}, Existing size: {}",
+    //file_path,
+    //existing_size
     //);
 
     // Prepare HTTP request with HTTP/2
-    let request = CLIENT.get(url).version(Version::HTTP_2);
+    let request = client.get(url).version(Version::HTTP_2);
 
     // Handle the response and catch errors
     let response = match request.send().await {
@@ -230,7 +210,7 @@ pub async fn http2_download(
                 if inner.to_string().contains("UserUnsupportedVersion") {
                     //log::error!("HTTP/2 unsupported for URL: {}", url);
                     return Err(NgetError::InvalidUrl(
-                        "URL is Invalid. Please make sure the URL is correct.".to_string()
+                        "URL is Invalid. Please make sure the URL is correct.".to_string(),
                     ));
                 }
             }

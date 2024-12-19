@@ -12,9 +12,10 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-use nget::cli;
+use nget::{cli, proxy_utils::ProxyConfig};
 use nget::error::NgetError;
 use nget::http;
+use nget::utils::proxy_utils;
 
 use clap::Parser;
 use futures::future;
@@ -45,6 +46,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let output_dir = output_dir.clone();
         let url = url.clone();
         let http_version = args.http_version.clone();
+        let output_file_name = args.output_file_name.clone();
+
+        let config = ProxyConfig {
+            proxy_url: args.proxy_url.clone(),
+            proxy_user: args.proxy_user.clone(),
+            proxy_password: args.proxy_pass.clone(),
+        };
+
         let pb = if quiet {
             ProgressBar::hidden()
         } else {
@@ -66,10 +75,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     eprintln!("Attempt {} for URL: {}", attempt, url);
                 }
 
-                match http::download_file(&url, &output_dir, &pb, &http_version).await {
+                match http::download_file(&url, &output_dir, &output_file_name.as_deref(), &pb, &http_version, &config).await {
                     Ok(_) => {
-                        let file_name = url.split('/').last().unwrap_or("index.html");
-                        pb.finish_with_message(format!("Download complete: {}/{}", output_dir, file_name));
+                        // There is no use for this Ok match case, but you need it for compliation.
+                        // utils/http.rs handles all of the previous progress bar messages etc.
                         break;
                     }
                     Err(e) if attempt < retries => {
