@@ -19,6 +19,6 @@ pub use utils::enums;
 pub use utils::error;
 pub use utils::file_utils;
 pub use utils::http;
+pub use utils::proxy_utils;
 pub use utils::resolver_utils;
 pub use utils::url_utils;
-pub use utils::proxy_utils;

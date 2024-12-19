@@ -13,11 +13,11 @@
 // GNU General Public License for more details.
 
 pub mod cli;
+pub mod client_utils;
 pub mod enums;
 pub mod error;
 pub mod file_utils;
 pub mod http;
+pub mod proxy_utils;
 pub mod resolver_utils;
 pub mod url_utils;
-pub mod proxy_utils;
-pub mod client_utils;

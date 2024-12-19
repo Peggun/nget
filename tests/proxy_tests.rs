@@ -1,12 +1,12 @@
 #[cfg(test)]
 mod proxy_tests {
-    use wiremock::{Mock, MockServer, ResponseTemplate};
-    use wiremock::matchers::{method, path};
-    use nget::http::download_file;
-    use nget::enums::HttpVersion;
-    use nget::proxy_utils::ProxyConfig;
     use indicatif::ProgressBar;
+    use nget::enums::HttpVersion;
+    use nget::http::download_file;
+    use nget::proxy_utils::ProxyConfig;
     use std::path::Path;
+    use wiremock::matchers::{method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[tokio::test]
     async fn test_proxy_with_mock_server() {
@@ -56,7 +56,6 @@ mod proxy_tests {
         tokio::fs::remove_file(&saved_file_path).await.unwrap();
         tokio::fs::remove_dir_all(save_dir).await.unwrap();
     }
-
 
     #[tokio::test]
     async fn test_proxy_failure() {
@@ -139,5 +138,4 @@ mod proxy_tests {
         tokio::fs::remove_file(&saved_file_path).await.unwrap();
         tokio::fs::remove_dir_all(save_dir).await.unwrap();
     }
-
 }

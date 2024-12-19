@@ -15,16 +15,16 @@
 use crate::enums::HttpVersion;
 use crate::error::NgetError;
 use crate::utils::client_utils::get_client;
+use crate::utils::proxy_utils::ProxyConfig;
 use crate::utils::resolver_utils::build_resolver;
 use crate::utils::url_utils::{self, get_file_name};
-use crate::utils::proxy_utils::ProxyConfig;
 
 use futures_util::StreamExt;
 
 use indicatif::ProgressBar;
 
-use reqwest::Version;
 use reqwest::header;
+use reqwest::Version;
 
 use std::error::Error;
 use std::fs::metadata;
@@ -42,9 +42,15 @@ pub async fn download_file(
     config: &ProxyConfig,
 ) -> Result<(), NgetError> {
     match http_version {
-        HttpVersion::Http11 => http11_download(url, save_dir, *output_file_name, progress_bar, config).await,
-        HttpVersion::Http2 => http2_download(url, save_dir, *output_file_name, progress_bar, config).await,
-        HttpVersion::Http3 => http11_download(url, save_dir, *output_file_name, progress_bar, config).await,
+        HttpVersion::Http11 => {
+            http11_download(url, save_dir, *output_file_name, progress_bar, config).await
+        }
+        HttpVersion::Http2 => {
+            http2_download(url, save_dir, *output_file_name, progress_bar, config).await
+        }
+        HttpVersion::Http3 => {
+            http11_download(url, save_dir, *output_file_name, progress_bar, config).await
+        }
     }
 }
 
@@ -53,15 +59,13 @@ pub async fn http11_download(
     save_dir: &str,
     output_file_name: Option<&str>,
     progress_bar: &ProgressBar,
-    config: &ProxyConfig
+    config: &ProxyConfig,
 ) -> Result<(), NgetError> {
     let _ = env_logger::try_init();
 
     // Create a client
-    let client = match get_client(&config, &HttpVersion::Http11) {
-        Ok(client) => {
-            client
-        }
+    let client = match get_client(config, &HttpVersion::Http11) {
+        Ok(client) => client,
         Err(e) => {
             // Handle the error (e.g., print it, log it, etc.)
             return Err(e);
@@ -155,15 +159,13 @@ pub async fn http2_download(
     save_dir: &str,
     output_file_name: Option<&str>,
     progress_bar: &ProgressBar,
-    config: &ProxyConfig
+    config: &ProxyConfig,
 ) -> Result<(), NgetError> {
     let _ = env_logger::try_init();
 
     // Create a client
-    let client = match get_client(&config, &HttpVersion::Http2) {
-        Ok(client) => {
-            client
-        }
+    let client = match get_client(config, &HttpVersion::Http2) {
+        Ok(client) => client,
         Err(e) => {
             // Handle the error (e.g., print it, log it, etc.)
             return Err(e);

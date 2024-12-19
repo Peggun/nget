@@ -12,9 +12,9 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-use nget::{cli, proxy_utils::ProxyConfig};
 use nget::error::NgetError;
 use nget::http;
+use nget::{cli, proxy_utils::ProxyConfig};
 
 use clap::Parser;
 use futures::future;

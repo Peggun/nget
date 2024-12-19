@@ -41,7 +41,7 @@ mod tests {
             &output_file_name,
             &progress_bar,
             &HttpVersion::Http11,
-            &config
+            &config,
         )
         .await;
 
@@ -73,7 +73,7 @@ mod tests {
             &output_file_name,
             &progress_bar,
             &HttpVersion::Http11,
-            &config
+            &config,
         )
         .await;
 
@@ -109,7 +109,7 @@ mod tests {
             &output_file_name,
             &progress_bar,
             &HttpVersion::Http2,
-            &config
+            &config,
         )
         .await;
 
@@ -151,7 +151,7 @@ mod tests {
             &output_file_name,
             &progress_bar,
             &HttpVersion::Http2,
-            &config
+            &config,
         )
         .await;
 

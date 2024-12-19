@@ -14,64 +14,76 @@
 
 use reqwest::{Client, Proxy};
 
-use crate::proxy_utils::ProxyConfig;
-use crate::error::NgetError;
 use crate::enums::HttpVersion;
+use crate::error::NgetError;
+use crate::proxy_utils::ProxyConfig;
 
 /// Creates a Client with proxy support for each HTTP version.
-pub fn get_client(proxy_config: &ProxyConfig, http_version: &HttpVersion) -> Result<Client, NgetError> {
+pub fn get_client(
+    proxy_config: &ProxyConfig,
+    http_version: &HttpVersion,
+) -> Result<Client, NgetError> {
     if proxy_config.proxy_url.is_empty() {
         match http_version {
-            HttpVersion::Http11 => Client::builder().build().map_err(|e| NgetError::from(e)),
-            HttpVersion::Http2 => Client::builder().http2_prior_knowledge().build().map_err(|e| NgetError::from(e)),
-            HttpVersion::Http3 => Client::builder().build().map_err(|e| NgetError::from(e))
+            HttpVersion::Http11 => Client::builder().build().map_err(NgetError::from),
+            HttpVersion::Http2 => Client::builder()
+                .http2_prior_knowledge()
+                .build()
+                .map_err(NgetError::from),
+            HttpVersion::Http3 => Client::builder().build().map_err(NgetError::from),
         }
     } else {
         match http_version {
             HttpVersion::Http11 => {
                 if !proxy_config.proxy_password.is_empty() || !proxy_config.proxy_user.is_empty() {
                     Client::builder()
-                        .proxy(Proxy::all(proxy_config.proxy_url.clone())?
-                            .basic_auth(&proxy_config.proxy_user, &proxy_config.proxy_password))
+                        .proxy(
+                            Proxy::all(proxy_config.proxy_url.clone())?
+                                .basic_auth(&proxy_config.proxy_user, &proxy_config.proxy_password),
+                        )
                         .build()
-                        .map_err(|e| NgetError::from(e))
+                        .map_err(NgetError::from)
                 } else {
                     Client::builder()
-                    .proxy(Proxy::all(proxy_config.proxy_url.clone())?)
-                    .build()
-                    .map_err(|e| NgetError::from(e)) // Map errors to your custom NgetError
+                        .proxy(Proxy::all(proxy_config.proxy_url.clone())?)
+                        .build()
+                        .map_err(NgetError::from)
                 }
-            },
+            }
             HttpVersion::Http2 => {
                 if !proxy_config.proxy_password.is_empty() || !proxy_config.proxy_user.is_empty() {
                     Client::builder()
-                        .proxy(Proxy::all(proxy_config.proxy_url.clone())?
-                            .basic_auth(&proxy_config.proxy_user, &proxy_config.proxy_password))
+                        .proxy(
+                            Proxy::all(proxy_config.proxy_url.clone())?
+                                .basic_auth(&proxy_config.proxy_user, &proxy_config.proxy_password),
+                        )
                         .http2_prior_knowledge()
                         .build()
-                        .map_err(|e| NgetError::from(e))
+                        .map_err(NgetError::from)
                 } else {
                     Client::builder()
-                    .proxy(Proxy::all(proxy_config.proxy_url.clone())?)
-                    .http2_prior_knowledge()
-                    .build()
-                    .map_err(|e| NgetError::from(e)) // Map errors to your custom NgetError
+                        .proxy(Proxy::all(proxy_config.proxy_url.clone())?)
+                        .http2_prior_knowledge()
+                        .build()
+                        .map_err(NgetError::from)
                 }
-            },
+            }
             HttpVersion::Http3 => {
                 if !proxy_config.proxy_password.is_empty() || !proxy_config.proxy_user.is_empty() {
                     Client::builder()
-                        .proxy(Proxy::all(proxy_config.proxy_url.clone())?
-                            .basic_auth(&proxy_config.proxy_user, &proxy_config.proxy_password))
+                        .proxy(
+                            Proxy::all(proxy_config.proxy_url.clone())?
+                                .basic_auth(&proxy_config.proxy_user, &proxy_config.proxy_password),
+                        )
                         .build()
-                        .map_err(|e| NgetError::from(e))
+                        .map_err(NgetError::from)
                 } else {
                     Client::builder()
-                    .proxy(Proxy::all(proxy_config.proxy_url.clone())?)
-                    .build()
-                    .map_err(|e| NgetError::from(e)) // Map errors to your custom NgetError
+                        .proxy(Proxy::all(proxy_config.proxy_url.clone())?)
+                        .build()
+                        .map_err(NgetError::from) // Map errors to your custom NgetError
                 }
-            },
+            }
         }
     }
 }

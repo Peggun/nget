@@ -12,6 +12,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
+#[derive(Default)]
 pub struct ProxyConfig {
     pub proxy_url: String,
     pub proxy_user: String,
@@ -21,16 +22,6 @@ pub struct ProxyConfig {
 impl ProxyConfig {
     /// Creates a new empty instance of ProxyConfig. Good for test use
     pub fn empty() -> Self {
-        ProxyConfig {
-            proxy_url: String::new(),
-            proxy_user: String::new(),
-            proxy_password: String::new()
-        }
-    }
-}
-
-impl Default for ProxyConfig {
-    fn default() -> Self {
         ProxyConfig {
             proxy_url: String::new(),
             proxy_user: String::new(),
